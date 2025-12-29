@@ -73,7 +73,8 @@
   const STORAGE_KEY = "web_test_data";
   let data = [];
 
-  // 載入資料
+  /* ---------- 基本資料處理 ---------- */
+
   function loadData(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
@@ -82,12 +83,10 @@
     }
   }
 
-  // 儲存資料
   function saveData(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
 
-  // 新增一筆
   function addData(){
     const input = document.getElementById("inputText");
     const value = input.value.trim();
@@ -106,7 +105,6 @@
     input.value = "";
   }
 
-  // 顯示全部資料
   function showAll(){
     if(data.length === 0){
       alert("目前沒有資料");
@@ -116,7 +114,6 @@
     render();
   }
 
-  // 畫面渲染
   function render(){
     const log = document.getElementById("log");
     log.textContent = data.map(
@@ -124,17 +121,18 @@
     ).join("\n");
   }
 
-  // 匯出 CSV（選項 B：序號 + 時間 + 內容）
+  /* ---------- CSV 匯出（手機分享 / 電腦下載） ---------- */
+
   function exportCSV(){
     if(data.length === 0){
       alert("目前沒有資料可以匯出");
       return;
     }
 
+    // CSV 內容（序號 + 時間 + 內容）
     let csv = "序號,時間,內容\n";
-
     data.forEach((d, i) => {
-      const safeText = `"${String(d.value).replace(/"/g, '""')}"`;
+      const safeText = `"${String(d.value).replace(/"/g,'""')}"`;
       csv += `${i+1},${d.time},${safeText}\n`;
     });
 
@@ -142,9 +140,26 @@
     const ymd = now.toISOString().slice(0,10).replace(/-/g,"");
     const filename = `web_test_${ymd}.csv`;
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
 
+    /* 📱 手機：使用 Web Share API（LINE / 檔案） */
+    try{
+      const file = new File([blob], filename, { type:"text/csv" });
+
+      if (navigator.canShare && navigator.canShare({ files:[file] })) {
+        navigator.share({
+          files: [file],
+          title: "匯出 CSV",
+          text: "測試資料 CSV"
+        });
+        return;
+      }
+    }catch(e){
+      console.log("分享不支援，改用下載");
+    }
+
+    /* 💻 桌機：直接下載 */
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
@@ -154,7 +169,7 @@
     URL.revokeObjectURL(url);
   }
 
-  // 初始化
+  /* ---------- 初始化 ---------- */
   loadData();
 </script>
 </body>
