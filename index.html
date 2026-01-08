@@ -2,14 +2,11 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <!-- ✅ 手機關鍵 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>FCBU 加班預報系統</title>
 
-  <!-- ================================================= -->
-  <!-- ✅ 手機 / RWD 外掛樣式（不影響原作者） -->
-  <!-- ================================================= -->
+  <!-- ================= RWD / 手機補強（不影響原作者） ================= -->
   <style>
     * { box-sizing: border-box; }
 
@@ -20,14 +17,14 @@
       background: #f4f6fb;
     }
 
-    /* 外層包裝（只包，不改） */
+    /* 外層包裝（只包一層，不動內部結構） */
     .app-container {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 16px;
     }
 
-    /* 手機補救 */
+    /* 手機補救：表格可橫滑 */
     @media (max-width: 768px) {
       table {
         display: block;
@@ -42,16 +39,17 @@
       }
     }
 
-    /* 分享按鈕樣式（獨立） */
+    /* 分享按鈕（獨立樣式） */
     .share-btn {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 10px;
+      margin: 16px 0;
+      padding: 14px;
+      width: 100%;
+      border-radius: 12px;
       border: none;
       background: #16a34a;
       color: #fff;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
     }
     .share-btn:hover {
@@ -62,95 +60,99 @@
 
 <body>
 
-<!-- ================================================= -->
-<!-- ✅ 外層容器（唯一新增的 HTML 結構） -->
-<!-- ================================================= -->
 <div class="app-container">
 
   <!-- ================================================= -->
-  <!-- 🔽【貼這裡】原作者的 HTML 內容（幾乎整段貼） -->
+  <!-- 🔽【原作者 HTML】請把她 <body> 內的內容整段貼在這裡 -->
   <!-- ================================================= -->
 
   <!--
-    ⚠️ 請把原本 <body> 裡的內容，
-    ⚠️ 原封不動貼在這裡
-    ⚠️ 不要刪她的 id / class
+    ⚠️ 注意：
+    - 原封不動貼
+    - 不要改 id / class
+    - 不要刪 script 依賴的元素
   -->
 
-  <!-- 例： -->
-  <!-- 原作者 HTML START -->
-  <!--
-    <h1>加班預報系統</h1>
-    <form>...</form>
-    <table>...</table>
+  <!-- ====== 原作者 HTML START ====== -->
+
+  <!-- 例如：
+  <h1>加班預報系統</h1>
+  <form>...</form>
+  <table>...</table>
   -->
-  <!-- 原作者 HTML END -->
+
+  <!-- ====== 原作者 HTML END ====== -->
 
 
-  <!-- ================================================= -->
-  <!-- ✅ 新增功能：分享（不影響原流程） -->
-  <!-- ================================================= -->
-  <button class="share-btn" onclick="shareResult()">
-    📤 分享結果（LINE / Mail）
+  <!-- ================= 新增功能：分享（唯一新增 UI） ================= -->
+  <button class="share-btn" onclick="shareCurrentTable()">
+    📤 分享目前畫面結果（LINE / Mail）
   </button>
 
 </div>
 
 <!-- ================================================= -->
-<!-- 🔽【貼這裡】原作者的 <script>（整段保留） -->
+<!-- 🔽【原作者 JS】請把她原本的 <script> 整段貼在這裡 -->
 <!-- ================================================= -->
 <script>
-  /*
-    ⚠️ 請把她原本的 JS（function、localStorage、流程）
-    ⚠️ 整段貼在這裡
-    ⚠️ 不要改內容
-  */
+/*
+  ⚠️ 原作者的 JS 原封不動貼這裡
+  ⚠️ 不要修改
+*/
 </script>
 
 <!-- ================================================= -->
-<!-- ✅ 新增 JS：分享功能（完全獨立） -->
+<!-- ✅ 新增 JS：從「畫面表格」產生分享內容（零侵入） -->
 <!-- ================================================= -->
 <script>
-  /* ⚠️ 請確認 key 是否與原作者一致 */
-  const SHARE_STORAGE_KEY = "OT_FORECAST_DATA"; 
-  // ↑ 如果她用別的 key，這裡改名稱即可
-
-  function buildShareText(){
-    const data = JSON.parse(localStorage.getItem(SHARE_STORAGE_KEY) || "[]");
-
-    if(data.length === 0){
-      return "目前尚無加班預報資料。";
+  function shareCurrentTable(){
+    const table = document.querySelector("table");
+    if(!table){
+      alert("目前畫面找不到可分享的表格");
+      return;
     }
 
     let text = "【FCBU 加班預報結果】\n\n";
-    data.forEach((row, i) => {
-      text += `${i+1}. 工號：${row.emp || ""}｜時數：${row.hours || ""}｜時間：${row.time || ""}\n`;
+    const rows = table.querySelectorAll("tr");
+
+    rows.forEach((row, index) => {
+      const cells = row.querySelectorAll("th, td");
+      if(cells.length === 0) return;
+
+      const line = [...cells]
+        .map(c => c.innerText.trim())
+        .join("｜");
+
+      if(index === 0){
+        text += line + "\n";
+        text += "----------------------\n";
+      }else{
+        text += line + "\n";
+      }
     });
 
-    return text;
+    doShare(text);
   }
 
-  function shareResult(){
-    const text = buildShareText();
-
+  function doShare(text){
+    // 📱 手機原生分享（LINE / Mail / App）
     if(navigator.share){
       navigator.share({
-        title: "加班預報結果",
+        title: "FCBU 加班預報結果",
         text: text
       }).catch(()=>{});
-    }else{
-      fallbackShare(text);
+      return;
     }
-  }
 
-  function fallbackShare(text){
+    // 🖥 fallback：Mail + 複製
     const mailto =
-      `mailto:?subject=${encodeURIComponent("加班預報結果")}&body=${encodeURIComponent(text)}`;
+      `mailto:?subject=${encodeURIComponent("FCBU 加班預報結果")}&body=${encodeURIComponent(text)}`;
     window.location.href = mailto;
 
     if(navigator.clipboard){
-      navigator.clipboard.writeText(text);
-      alert("已複製內容，可貼到 LINE / Mail");
+      navigator.clipboard.writeText(text).then(()=>{
+        alert("已複製分享內容，可貼到 LINE / Mail");
+      });
     }
   }
 </script>
