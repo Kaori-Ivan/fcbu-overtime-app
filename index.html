@@ -255,29 +255,7 @@
   }
 
   /* ===== 筆數 / 全刪 / 匯出：同一行（含 .right）===== */
-  .action-secondary{
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: nowrap;
-  }
 
-  .action-secondary > button{
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .action-secondary .right{
-    display: flex;
-    gap: 8px;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .action-secondary .right > button{
-    flex: 1 1 0;
-    min-width: 0;
-  }
 
   /* ===== 假日提示隱藏 ===== */
   .holiday-hint{
@@ -285,7 +263,22 @@
   }
 
 }
+ /* ===== 放在這裡最後一段 ===== */
+    @media (max-width: 600px){
 
+      .action-main,
+      .action-secondary{
+        display: flex;
+        gap: 10px;
+      }
+
+      .action-main button,
+      .action-secondary button{
+        flex: 1 1 0;
+        min-width: 0;
+      }
+
+    }
   </style>
 </head>
 <body>
@@ -330,15 +323,18 @@
   </div>
 </div>
 
+<!-- 第一排：送出 / 清除 -->
+<div class="actions action-main">
+  <button class="primary" id="btnSubmit">送出</button>
+  <button class="ghost" id="btnClear">清除畫面</button>
+</div>
 
-      <div class="actions action-secondary">
-        <button class="primary" id="btnSubmit">送出</button>
-        <button class="ghost" id="btnClear">清除畫面</button>
-        <div class="right">
-          <button class="danger" id="btnWipe">全數刪除預報資料</button>
-          <button class="primary" id="btnExport">匯出 CSV</button>
-        </div>
-      </div>
+<!-- 第二排：全刪 / 匯出 -->
+<div class="actions action-secondary">
+  <button class="danger" id="btnWipe">全數刪除預報資料</button>
+  <button class="primary" id="btnExport">匯出 CSV</button>
+</div>
+
 
       <div class="meta">
         <div class="pill">筆數：<span id="count" class="mono">0</span></div>
