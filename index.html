@@ -226,42 +226,66 @@
     min-width: 760px; /* 手機橫滑表格 */
   }
 
-  /* ===== 1️⃣ 工作內容：11 個選項 → 2 個並排 ===== */
+  /* ===== 工作內容：11 個選項 → 2 個並排 ===== */
   .work-grid{
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px;
   }
 
-  /* ===== 2️⃣ 起 / 迄 時間並排（日期維持單行） ===== */
+  /* ===== 起 / 迄 時間並排（日期維持單行) ===== */
   .time-row{
     display: flex;
     gap: 10px;
+    flex-wrap: nowrap;
   }
   .time-row .field{
     flex: 1;
   }
 
-  /* ===== 3️⃣ 送出 / 清除畫面 → 同一行 ===== */
+}
+  /* ===== 送出 / 清除畫面 → 同一行===== */
   .action-main{
     display: flex;
     gap: 10px;
+    flex-wrap: nowrap;   /* 🔑 不允許換行 */
   }
   .action-main button{
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
   }
+}
 
-  /* ===== 4️⃣ 筆數 / 全部刪除 / 匯出 CSV → 同一行 ===== */
+  /* ===== 筆數 / 全部刪除 / 匯出 CSV → 同一行 ===== */
+@media (max-width: 600px){
+
   .action-secondary{
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
-  }
-  .action-secondary > *{
-    flex: 1;
-    text-align: center;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
-  /* ===== 5️⃣ 假日預設提示詞：手機隱藏 ===== */
+  /* 左邊的按鈕（送出 / 清除） */
+  .action-secondary > button{
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* 右邊那一包（全刪 + 匯出） */
+  .action-secondary .right{
+    display: flex;
+    gap: 8px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .action-secondary .right > button{
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+}
+  /* ===== 假日預設提示詞：手機隱藏 ===== */
   .holiday-hint{
     display: none;
   }
@@ -291,22 +315,28 @@
       <div class="section-title">工作內容</div>
       <div class="work-grid" id="workGrid"></div>
 
-      <div class="row" style="margin-top:10px;">
-        <div class="field small">
-          <label>日期</label>
-          <input id="otDate" type="date" />
-        </div>
-        <div class="field small">
-          <label>起</label>
-          <input id="startTime" type="time" />
-        </div>
-        <div class="field small">
-          <label>迄</label>
-          <input id="endTime" type="time" />
-        </div>
-      </div>
+<!-- 日期：單獨一行 -->
+<div class="row" style="margin-top:10px;">
+  <div class="field small">
+    <label>日期</label>
+    <input id="otDate" type="date" />
+  </div>
+</div>
 
-      <div class="actions">
+<!-- 起 / 迄：同一行 -->
+<div class="row time-row">
+  <div class="field small">
+    <label>起</label>
+    <input id="startTime" type="time" />
+  </div>
+  <div class="field small">
+    <label>迄</label>
+    <input id="endTime" type="time" />
+  </div>
+</div>
+
+
+      <div class="actions action-secondary">
         <button class="primary" id="btnSubmit">送出</button>
         <button class="ghost" id="btnClear">清除畫面</button>
         <div class="right">
