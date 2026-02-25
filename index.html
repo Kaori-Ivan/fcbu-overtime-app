@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FCBU OT QR v2 clean（加班申報｜MVP）</title>
+<title>FCBU 加班申報｜OT QR v2 clean（Mobile）</title>
 
 <!-- QRCode.js -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<!-- html5-qrcode（相機掃描） -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 :root{
@@ -106,13 +109,13 @@ body{
   background:#eef6ff;
 }
 .work-num{
-  width:28px;height:28px;
+  width:30px;height:30px;
   border-radius:10px;
   background:#e6f1ff;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-weight:700;
+  font-weight:800;
   color:#2b6cb0;
 }
 
@@ -134,7 +137,7 @@ button{
 .btn-primary{
   background:#e6f1ff;
   border-color:#6aa8ee;
-  font-weight:700;
+  font-weight:800;
 }
 .btn-danger{
   background:#ffecee;
@@ -178,6 +181,28 @@ button{
   word-break:break-all;
 }
 
+/* ===== Camera panel ===== */
+.cam-panel{
+  margin-top:12px;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid #e3ecff;
+  background:#fbfdff;
+}
+.cam-row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top:10px;
+}
+#qrReader{
+  width:100%;
+  max-width:420px;
+  border-radius:14px;
+  overflow:hidden;
+}
+
 /* ===== RWD ===== */
 @media (max-width:900px){
   .work-grid{grid-template-columns:repeat(2,1fr);}
@@ -190,7 +215,7 @@ button{
 <body>
 <div class="header">
   <div class="logo">K</div>
-  <h2>FCBU 加班申報｜OT QR v2 clean（MVP）</h2>
+  <h2>FCBU 加班申報｜OT QR v2 clean（Mobile）</h2>
 </div>
 
 <div class="container">
@@ -200,19 +225,21 @@ button{
     <div class="label">共用條件（同一天 / 同時數 / 同工作內容）</div>
     <div class="row">
       <div class="flex1">
-        <div class="label">日期（YYMMDD）</div>
-        <input id="inDate" class="input" placeholder="例如 260225">
-        <div class="muted">預設今日，可手改</div>
+        <div class="label">日期（點擊開啟日曆）</div>
+        <input id="inDateUI" class="input" type="date">
+        <div class="muted">封包會自動轉成 YYMMDD</div>
       </div>
+
       <div class="flex1">
         <div class="label">加班時數（HOURS）</div>
         <input id="inHours" class="input" inputmode="decimal" placeholder="例如 4 或 2.5">
         <div class="muted">建議 0.5 為單位</div>
       </div>
+
       <div class="flex1">
         <div class="label">工作代碼（01–12）</div>
         <div class="input" style="display:flex;align-items:center;justify-content:space-between;">
-          <span id="selWorkText" style="font-weight:700;">01</span>
+          <span id="selWorkText" style="font-weight:800;">01</span>
           <span class="muted">點下方工作內容切換</span>
         </div>
       </div>
@@ -223,9 +250,7 @@ button{
   <div class="card">
     <div class="label">工作內容（封包只放 01–12）</div>
     <div class="work-wrap">
-      <div class="work-grid" id="workGrid">
-        <!-- JS 生成 12 項 -->
-      </div>
+      <div class="work-grid" id="workGrid"></div>
       <div class="muted" style="margin-top:10px;">
         封包內只存 <b>兩位數代碼</b>（01–12），中文名稱由 VBA/Excel 對照表還原。
       </div>
@@ -234,14 +259,31 @@ button{
 
   <!-- 人員工號連續掃描 -->
   <div class="card">
-    <div class="label">人員工號（連續掃描加入，用逗號區分）</div>
+    <div class="label">人員工號（連續加入，用逗號區分）</div>
+
     <div class="row">
-      <input id="inID" class="input flex1" placeholder="掃描或輸入工號後按 Enter（例如 C1900）">
+      <input id="inID" class="input flex1" placeholder="掃描/輸入工號後按 Enter（例如 C1900）">
       <button id="btnAdd" class="btn-primary">加入</button>
+      <button id="btnCam" class="btn-primary">相機掃描加入</button>
       <button id="btnUndo">刪除最後一位</button>
       <button id="btnClearIDs" class="btn-danger">清空人員</button>
       <span class="badge" id="badgeCount">人數：0</span>
     </div>
+
+    <div id="camPanel" class="cam-panel" style="display:none;">
+      <div class="muted">
+        對準工號 QR/條碼掃描；掃到會自動加入。<br>
+        ⚠ 相機功能通常需要 <b>https</b> 或 <b>localhost</b>（GitHub Pages/內網 https 都 OK），純 file:/// 可能無法啟動。
+      </div>
+      <div style="margin-top:10px;">
+        <div id="qrReader"></div>
+      </div>
+      <div class="cam-row">
+        <button id="btnCamStop" class="btn-danger">關閉相機</button>
+        <span class="badge" id="badgeCam">相機：未啟動</span>
+      </div>
+    </div>
+
     <div style="margin-top:10px;">
       <div class="label">IDS（逗號清單）</div>
       <div id="idsText" class="code">（尚無人員）</div>
@@ -281,7 +323,7 @@ button{
 
 <script>
 /** ===== Config ===== */
-const MAX_QR_LEN = 200; // 現場穩定掃描建議值（可改成 250 / 300）
+const MAX_QR_LEN = 200; // 手機掃描穩定建議值
 const WORK_NAMES = [
   "UNI-主線","UNI-支線","UNI-前置",
   "SP-主線","SP-前置","TCH/MVH",
@@ -291,11 +333,18 @@ const WORK_NAMES = [
 
 /** ===== Helpers ===== */
 function pad2(n){ return String(n).padStart(2,"0"); }
-function todayYYMMDD(){
+function todayISO(){
   const d = new Date();
-  const yy = String(d.getFullYear()).slice(-2);
+  const yyyy = d.getFullYear();
   const mm = pad2(d.getMonth()+1);
   const dd = pad2(d.getDate());
+  return `${yyyy}-${mm}-${dd}`;
+}
+function isoToYYMMDD(iso){ // "2026-02-25" -> "260225"
+  if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  const yy = iso.slice(2,4);
+  const mm = iso.slice(5,7);
+  const dd = iso.slice(8,10);
   return `${yy}${mm}${dd}`;
 }
 function setStatus(text, kind="ok"){
@@ -310,9 +359,9 @@ function normalizeId(s){
 }
 
 /** ===== Elements ===== */
-const elDate = document.getElementById("inDate");
-const elHours = document.getElementById("inHours");
-const elInID = document.getElementById("inID");
+const elDateUI = document.getElementById("inDateUI");
+const elHours  = document.getElementById("inHours");
+const elInID   = document.getElementById("inID");
 const elWorkGrid = document.getElementById("workGrid");
 const elSelWorkText = document.getElementById("selWorkText");
 
@@ -320,30 +369,30 @@ const elIdsText = document.getElementById("idsText");
 const elBadgeCount = document.getElementById("badgeCount");
 const elBadgeLen = document.getElementById("badgeLen");
 const elBadgeLimit = document.getElementById("badgeLimit");
-
 const elRawText = document.getElementById("rawText");
 const elQrBox = document.getElementById("qrBox");
 
+const elCamPanel = document.getElementById("camPanel");
+const elBadgeCam = document.getElementById("badgeCam");
+
 /** ===== State ===== */
 let selectedWork = "01";
-let ids = []; // array of IDs, unique
+let ids = []; // unique
+let qrScanner = null;
 
 /** ===== Init ===== */
-elDate.value = todayYYMMDD();
+elDateUI.value = todayISO();
 elBadgeLimit.textContent = `上限：${MAX_QR_LEN}（建議）`;
 renderWorkButtons();
 updateIdsUI();
 updatePacketPreview("");
+setStatus("待生成");
 
 /** ===== Work buttons ===== */
 function renderWorkButtons(){
-  // 12 項分 4 組*3（對齊你原本 layout）
   elWorkGrid.innerHTML = "";
   const groups = [0,1,2,3].map(()=>document.createElement("div"));
-  groups.forEach(g=>{
-    g.className = "work-group";
-    elWorkGrid.appendChild(g);
-  });
+  groups.forEach(g=>{ g.className="work-group"; elWorkGrid.appendChild(g); });
 
   for(let i=1;i<=12;i++){
     const idx = i-1;
@@ -353,13 +402,12 @@ function renderWorkButtons(){
     const btn = document.createElement("div");
     btn.className = "work-btn" + (code===selectedWork ? " active" : "");
     btn.dataset.work = code;
-
     btn.innerHTML = `<div class="work-num">${code}</div><div>${name}</div>`;
+
     btn.addEventListener("click", ()=>{
       selectedWork = code;
       elSelWorkText.textContent = selectedWork;
-      // refresh active
-      [...document.querySelectorAll(".work-btn")].forEach(x=>{
+      document.querySelectorAll(".work-btn").forEach(x=>{
         x.classList.toggle("active", x.dataset.work === selectedWork);
       });
       setStatus(`已選工作 ${selectedWork}`);
@@ -385,7 +433,6 @@ function addId(value){
   updateIdsUI();
   setStatus("已加入人員");
 }
-
 function undoLast(){
   if(ids.length>0){
     ids.pop();
@@ -393,52 +440,40 @@ function undoLast(){
     setStatus("已刪除最後一位", "warn");
   }
 }
-
 function clearIds(){
   ids = [];
   updateIdsUI();
   setStatus("已清空人員", "warn");
 }
-
 function updateIdsUI(){
-  const text = ids.length ? ids.join(",") : "（尚無人員）";
-  elIdsText.textContent = text;
+  elIdsText.textContent = ids.length ? ids.join(",") : "（尚無人員）";
   elBadgeCount.textContent = `人數：${ids.length}`;
 }
 
 /** ===== Packet / QR ===== */
 function buildPacket(){
-  const d = (elDate.value||"").trim();
+  const d = isoToYYMMDD(elDateUI.value);
   const h = (elHours.value||"").trim();
   const w = selectedWork;
   const idList = ids.join(",");
 
-  if(!/^\d{6}$/.test(d)) throw new Error("日期需為 YYMMDD（6 碼，例如 260225）");
+  if(!/^\d{6}$/.test(d)) throw new Error("日期不正確（請用日曆選擇）");
   if(!h || isNaN(Number(h))) throw new Error("加班時數 HOURS 需為數字（例如 4 或 2.5）");
   if(!w) throw new Error("工作代碼未選擇");
   if(ids.length===0) throw new Error("請至少加入 1 位人員工號");
 
   return `${d}|${h}|${w}|${idList}`;
 }
-
 function renderQR(text){
   elQrBox.innerHTML = "";
-  new QRCode(elQrBox, {
-    text,
-    width: 220,
-    height: 220,
-    correctLevel: QRCode.CorrectLevel.M
-  });
+  new QRCode(elQrBox, { text, width:220, height:220, correctLevel:QRCode.CorrectLevel.M });
 }
-
 function updatePacketPreview(packet){
   elRawText.textContent = packet || "（尚未生成）";
   elBadgeLen.textContent = `字串長度：${packet ? packet.length : 0}`;
 
-  if(!packet){
-    setStatus("待生成");
-    return;
-  }
+  if(!packet){ setStatus("待生成"); return; }
+
   if(packet.length > MAX_QR_LEN){
     setStatus(`超過上限（${packet.length}）`, "err");
   }else if(packet.length > Math.floor(MAX_QR_LEN*0.85)){
@@ -448,18 +483,56 @@ function updatePacketPreview(packet){
   }
 }
 
+/** ===== Camera Scan ===== */
+async function startCameraScan(){
+  elCamPanel.style.display = "block";
+  elBadgeCam.textContent = "相機：啟動中…";
+
+  if(!qrScanner){
+    qrScanner = new Html5Qrcode("qrReader");
+  }
+  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+  try{
+    await qrScanner.start(
+      { facingMode: "environment" },
+      config,
+      (decodedText) => {
+        // 你們若工號卡是 QR/條碼，decodedText 會是工號
+        // 若掃到的是其他格式，也可在這裡做解析再 addId
+        addId(decodedText);
+      }
+    );
+    elBadgeCam.textContent = "相機：掃描中…";
+    setStatus("相機掃描中…");
+  }catch(e){
+    elBadgeCam.textContent = "相機：啟動失敗";
+    alert("無法啟動相機：請確認已允許相機權限，且以 https 或 localhost 開啟此網頁。");
+  }
+}
+async function stopCameraScan(){
+  if(qrScanner){
+    try{ await qrScanner.stop(); }catch(_){}
+    try{ await qrScanner.clear(); }catch(_){}
+  }
+  elCamPanel.style.display = "none";
+  elBadgeCam.textContent = "相機：未啟動";
+  setStatus("相機已關閉", "warn");
+}
+
 /** ===== Events ===== */
 document.getElementById("btnAdd").addEventListener("click", ()=> addId(elInID.value));
-
 elInID.addEventListener("keydown", (e)=>{
   if(e.key === "Enter"){
     e.preventDefault();
     addId(elInID.value);
   }
 });
-
 document.getElementById("btnUndo").addEventListener("click", undoLast);
 document.getElementById("btnClearIDs").addEventListener("click", clearIds);
+
+document.getElementById("btnCam").addEventListener("click", startCameraScan);
+document.getElementById("btnCamStop").addEventListener("click", stopCameraScan);
 
 document.getElementById("btnQR").addEventListener("click", ()=>{
   try{
@@ -476,8 +549,11 @@ document.getElementById("btnQR").addEventListener("click", ()=>{
   }
 });
 
-document.getElementById("btnClearAll").addEventListener("click", ()=>{
-  elDate.value = todayYYMMDD();
+document.getElementById("btnClearAll").addEventListener("click", async ()=>{
+  // 停相機（若正在跑）
+  await stopCameraScan();
+
+  elDateUI.value = todayISO();
   elHours.value = "";
   selectedWork = "01";
   elSelWorkText.textContent = selectedWork;
@@ -489,6 +565,5 @@ document.getElementById("btnClearAll").addEventListener("click", ()=>{
   setStatus("已清除全部", "warn");
 });
 </script>
-
 </body>
 </html>
