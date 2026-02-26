@@ -205,9 +205,29 @@ button{
 
 /* ===== RWD ===== */
 @media (max-width:900px){
+  /* 原本就有的 */
   .work-grid{grid-template-columns:repeat(2,1fr);}
   .qr-wrap{grid-template-columns:1fr;}
   .qr-box{width:100%; min-height:240px;}
+
+  /* ✅ 關鍵：避免手機被 min-width 撐爆 */
+  .row{flex-direction:column; align-items:stretch;}
+  .flex1{min-width:0; width:100%;}
+
+  /* ✅ 避免手機橫向溢出造成「看起來跑版」 */
+  body{overflow-x:hidden;}
+  .container{padding:10px;}
+  .card{padding:14px;}
+
+  /* ✅ 讓工作內容按鈕在手機更一致 */
+  .work-btn{padding:12px; margin-bottom:10px;}
+  .work-num{width:28px; height:28px;}
+
+  /* ✅ 這個區塊是 flex + space-between，在手機容易擠壓：允許換行 */
+  .input[style*="justify-content:space-between"]{
+    flex-wrap:wrap;
+    gap:6px;
+  }
 }
 </style>
 </head>
