@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FCBU 加班申報｜OT QR v2 clean（Batch Pack）</title>
+<title>FCBU 加班申報 Ver1.0</title>
 
 <!-- QRCode.js -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -186,7 +186,7 @@ td.actions{white-space:nowrap;}
 <body>
 <div class="header">
   <div class="logo">K</div>
-  <h2>FCBU 加班申報｜OT QR v2 clean（Batch Pack）</h2>
+  <h2>FCBU 加班申報 Ver1.0</h2>
 </div>
 
 <div class="container">
@@ -197,7 +197,6 @@ td.actions{white-space:nowrap;}
     <div class="row">
       <div class="flex1">
         <input id="inDateUI" class="input" type="date">
-        <div class="muted">封包會自動轉成 YYMMDD（D）</div>
       </div>
       <span class="badge" id="badgeRows">暫存筆數：0</span>
     </div>
@@ -205,13 +204,12 @@ td.actions{white-space:nowrap;}
 
   <!-- 單筆輸入 -->
   <div class="card">
-    <div class="label">單筆輸入（加入暫存）</div>
 
     <div class="row" style="margin-bottom:12px;">
       <div class="flex1">
-        <div class="label">加班時數（正整數 H）</div>
+        <div class="label">加班時數</div>
         <input id="inHours" class="input" inputmode="numeric" placeholder="例如 4（只接受正整數）">
-        <div class="muted">平日預設 4；週六/週日預設 8（若你手動改過，系統不會覆蓋）</div>
+        <div class="muted">平日預設 4；週六預設 8</div>
       </div>
 
       <div class="flex1">
@@ -224,9 +222,7 @@ td.actions{white-space:nowrap;}
     </div>
 
     <div class="work-wrap">
-      <div class="label">工作內容（封包只放 01–12）</div>
       <div class="work-grid" id="workGrid"></div>
-      <div class="muted" style="margin-top:10px;">暫存表顯示中文；QR 只放代碼。</div>
     </div>
   </div>
 
@@ -257,12 +253,12 @@ td.actions{white-space:nowrap;}
     </div>
 
     <div style="margin-top:10px;">
-      <div class="label">IDS（逗號清單）</div>
+      <div class="label">人員清單</div>
       <div id="idsText" class="input" style="background:#f6f9ff;">（尚無人員）</div>
     </div>
 
     <div class="btn-row" style="margin-top:12px;">
-      <button id="btnAddRow" class="btn-primary">加入暫存（展開成每人一列）</button>
+      <button id="btnAddRow" class="btn-primary">加班清單列表</button>
       <button id="btnClearInput">清除本次輸入</button>
       <span class="badge" id="badgeInput">狀態：待加入</span>
     </div>
@@ -270,10 +266,7 @@ td.actions{white-space:nowrap;}
 
   <!-- 暫存清單 -->
   <div class="card">
-    <div class="label">暫存列表（輸出前可刪除）</div>
     <div class="muted" style="margin-bottom:10px;">
-      顯示完整格式：申請日期 / 工號 / 加班時數 / 站別(01–12)。輸出 QR 時才會打包成 D|ITEM… 格式。
-    </div>
 
     <table>
       <thead>
@@ -294,8 +287,8 @@ td.actions{white-space:nowrap;}
   <!-- 打包與輸出 -->
   <div class="card">
     <div class="btn-row">
-      <button id="btnPackQR" class="btn-primary">生成 QR（一次打包全部暫存）</button>
-      <button id="btnClearQR">清除 QR</button>
+      <button id="btnPackQR" class="btn-primary">生成 QR CODE</button>
+      <button id="btnClearQR">清除</button>
 
       <label class="badge" style="display:flex;gap:8px;align-items:center;">
         <input id="chkClearAfterPack" type="checkbox" style="width:18px;height:18px;">
