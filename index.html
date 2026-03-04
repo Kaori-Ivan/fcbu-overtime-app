@@ -18,6 +18,7 @@
   --text:#0b1a33;
   --muted:#5b6f8f;
   --border:#c9dbf2;
+  --danger:#ff6b6b;
 }
 *{box-sizing:border-box;}
 body{
@@ -52,7 +53,7 @@ body{
   box-shadow:0 8px 20px rgba(0,0,0,.06);
 }
 .label{font-size:14px;color:#234;margin-bottom:6px;}
-.muted{color:var(--muted);font-size:13px;}
+.muted{color:var(--muted);font-size:13px;line-height:1.4;}
 .input{
   width:100%;
   padding:16px;
@@ -101,11 +102,14 @@ button{
 #qrReader{width:100%;max-width:420px;border-radius:14px;overflow:hidden;}
 
 table{width:100%;border-collapse:collapse;font-size:14px;}
-th{background:#eaf3ff;padding:12px;text-align:left;}
-td{padding:12px;border-bottom:1px solid #e5edf7;}
+th{
+  background:#eaf3ff;padding:12px;text-align:left;
+  white-space:nowrap;
+}
+td{padding:12px;border-bottom:1px solid #e5edf7;vertical-align:middle;}
 td.actions{white-space:nowrap;}
 
-/* QR 只顯示 QR，不顯示 raw */
+/* QR 只顯示 QR */
 .qr-box{
   width:100%;
   min-height:260px;
@@ -118,17 +122,55 @@ td.actions{white-space:nowrap;}
   overflow:hidden;
 }
 
-/* 手機 */
+/* ===== 手機優化 ===== */
 @media (max-width:900px){
   .work-grid{grid-template-columns:repeat(2,1fr);}
 
-  /* 修跑版核心 */
   .row{flex-direction:column;align-items:stretch;}
   .flex1{min-width:0;width:100%;}
   body{overflow-x:hidden;}
   .container{padding:10px;}
   .card{padding:14px;}
   .qr-box{min-height:240px;}
+
+  /* ✅ 暫存列表：手機改成卡片式（解決你截圖中表頭/欄位擠壓） */
+  table{border-collapse:separate;border-spacing:0 10px;}
+  thead{display:none;}
+  tbody tr{
+    display:block;
+    background:#f9fbff;
+    border:1px solid #e3ecff;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 6px 14px rgba(0,0,0,.04);
+  }
+  tbody td{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    border-bottom:1px solid #eef3ff;
+    padding:12px 14px;
+  }
+  tbody td:last-child{border-bottom:none;}
+  tbody td::before{
+    content:attr(data-label);
+    color:#3b5776;
+    font-weight:700;
+    min-width:72px;
+    flex:0 0 auto;
+  }
+  td.actions{
+    justify-content:flex-end;
+  }
+  td.actions::before{content:"";}
+  td.actions button{
+    width:100%;
+    max-width:180px;
+  }
+
+  /* 手機按鈕更好點 */
+  button{padding:14px 16px;}
 }
 </style>
 </head>
@@ -153,7 +195,7 @@ td.actions{white-space:nowrap;}
     </div>
   </div>
 
-  <!-- 單筆輸入（加入暫存用） -->
+  <!-- 單筆輸入 -->
   <div class="card">
     <div class="label">單筆輸入（加入暫存）</div>
 
@@ -161,7 +203,7 @@ td.actions{white-space:nowrap;}
       <div class="flex1">
         <div class="label">加班時數（正整數 H）</div>
         <input id="inHours" class="input" inputmode="numeric" placeholder="例如 4（只接受正整數）">
-        <div class="muted">平日預設 4；週六/週日預設 8（可手動改）</div>
+        <div class="muted">平日預設 4；週六/週日預設 8（若你手動改過，系統不會覆蓋）</div>
       </div>
 
       <div class="flex1">
@@ -177,12 +219,12 @@ td.actions{white-space:nowrap;}
       <div class="label">工作內容（封包只放 01–12）</div>
       <div class="work-grid" id="workGrid"></div>
       <div class="muted" style="margin-top:10px;">
-        暫存表會顯示中文，QR 只放代碼。
+        暫存表顯示中文；QR 只放代碼。
       </div>
     </div>
   </div>
 
-  <!-- 人員工號（連續掃描加入） -->
+  <!-- 人員工號 -->
   <div class="card">
     <div class="label">人員工號（連續加入，用逗號區分）</div>
 
@@ -248,7 +290,7 @@ td.actions{white-space:nowrap;}
     </div>
   </div>
 
-  <!-- 打包與輸出 QR -->
+  <!-- 打包與輸出 -->
   <div class="card">
     <div class="btn-row">
       <button id="btnPackQR" class="btn-primary">生成 QR（一次打包全部暫存）</button>
@@ -265,7 +307,7 @@ td.actions{white-space:nowrap;}
     </div>
   </div>
 
-  <!-- 只顯示 QR Code（不顯示 raw） -->
+  <!-- 只顯示 QR Code -->
   <div class="card">
     <div class="label">QR Code</div>
     <div id="qrBox" class="qr-box"></div>
@@ -317,17 +359,31 @@ function workName(ww){
   return WORK_NAMES[n-1] || ww;
 }
 
-/** ✅ 平日/週末預設時數 */
+/** ✅ 平日/週末預設時數（跟日期走） */
 function defaultHoursByDateISO(iso){
   if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "4";
   const d = new Date(iso + "T00:00:00");
   const day = d.getDay(); // 0=Sun, 6=Sat
   return (day === 0 || day === 6) ? "8" : "4";
 }
+
+/**
+ * hoursTouched: 使用者是否手動改過時數
+ * lastAutoHours: 系統最後一次自動填入的值
+ * 規則：只要使用者沒手動改過、或目前值等於上一次自動值，就允許跟著日期更新
+ */
+let hoursTouched = false;
+let lastAutoHours = "";
+
 function applyDefaultHours(){
+  const want = defaultHoursByDateISO(elDateUI.value);
   const cur = (elHours.value || "").trim();
-  if(cur === ""){
-    elHours.value = defaultHoursByDateISO(elDateUI.value);
+
+  const canAuto = (!hoursTouched) || (cur === lastAutoHours) || (cur === "");
+  if(canAuto){
+    elHours.value = want;
+    lastAutoHours = want;
+    hoursTouched = false; // 還是視為自動狀態
   }
 }
 
@@ -361,16 +417,29 @@ let qrScanner = null;
 /** ===== Init ===== */
 elDateUI.value = todayISO();
 elBadgeLimit.textContent = `上限：${MAX_QR_LEN}（建議）`;
-applyDefaultHours();
 renderWorkButtons();
 updateIdsUI();
 renderTmpTable();
 updateStatusForPacket("");
 setBadge(elBadgeStatus, "狀態：待生成");
 
-/** 日期改變：自動帶入預設時數（不覆蓋手動輸入） */
+// 初始化：依日期自動帶入預設時數
+applyDefaultHours();
+
+/** 日期改變：時數自動跟著日期（除非你手動改過） */
 elDateUI.addEventListener("change", ()=>{
   applyDefaultHours();
+});
+
+/** 使用者手動修改時數：標記為 touched（不再自動覆蓋） */
+elHours.addEventListener("input", ()=>{
+  const v = (elHours.value || "").trim();
+  // 如果使用者輸入的是空字串，等同允許自動帶入
+  if(v === ""){
+    hoursTouched = false;
+    return;
+  }
+  hoursTouched = true;
 });
 
 /** ===== Work buttons ===== */
@@ -441,9 +510,11 @@ function addToTemp(){
     tmpRows.push({ rid: ++ridSeed, d, id: emp, h, ww });
   });
 
-  // 清除本次輸入（保留日期、保留站別；時數清空後重新帶入預設）
+  // 清除本次輸入（保留日期、保留站別）
   elHours.value = "";
+  hoursTouched = false;
   applyDefaultHours();
+
   ids = [];
   updateIdsUI();
 
@@ -451,7 +522,13 @@ function addToTemp(){
   setBadge(elBadgeInput, `狀態：已加入暫存（站別 ${ww} 可繼續）`);
 }
 
-function removeTempRow(rid){
+/** ✅ 刪除前確認 */
+function removeTempRowWithConfirm(rid){
+  const row = tmpRows.find(r=>r.rid===rid);
+  const msg = row
+    ? `確認刪除？\n工號：${row.id}\n時數：${row.h}\n站別：${row.ww} - ${workName(row.ww)}`
+    : "確認刪除這筆資料？";
+  if(!confirm(msg)) return;
   tmpRows = tmpRows.filter(r=>r.rid !== rid);
   renderTmpTable();
 }
@@ -472,14 +549,15 @@ function renderTmpTable(){
     const dateShow = (iso && ymd) ? `${iso}（${ymd}）` : r.d;
     const stationShow = `${r.ww} - ${workName(r.ww)}`;
 
+    // ✅ 每個 td 加 data-label：給手機卡片式 CSS 用
     return `
       <tr>
-        <td>${i+1}</td>
-        <td>${dateShow}</td>
-        <td>${r.id}</td>
-        <td>${r.h}</td>
-        <td>${stationShow}</td>
-        <td class="actions">
+        <td data-label="序">${i+1}</td>
+        <td data-label="申請日期">${dateShow}</td>
+        <td data-label="工號">${r.id}</td>
+        <td data-label="加班時數">${r.h}</td>
+        <td data-label="站別">${stationShow}</td>
+        <td class="actions" data-label="">
           <button class="btn-danger" data-rid="${r.rid}" style="padding:10px 12px;border-radius:12px;">
             刪除
           </button>
@@ -491,7 +569,7 @@ function renderTmpTable(){
   elTmpTbody.querySelectorAll("button[data-rid]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const rid = Number(btn.dataset.rid);
-      removeTempRow(rid);
+      removeTempRowWithConfirm(rid);
     });
   });
 }
@@ -502,6 +580,7 @@ function buildPacket(){
   if(!/^\d{6}$/.test(d)) throw new Error("日期不正確，請用日曆選擇");
   if(tmpRows.length===0) throw new Error("暫存列表目前沒有資料");
 
+  // group by key = H|WW
   const map = new Map(); // key -> Set(ids)
   tmpRows.forEach(r=>{
     const key = `${r.h}|${r.ww}`;
@@ -509,6 +588,7 @@ function buildPacket(){
     map.get(key).add(r.id);
   });
 
+  // sort items stable
   const keys = [...map.keys()].sort((a,b)=>{
     const [h1,w1]=a.split("|"); const [h2,w2]=b.split("|");
     const nh1=Number(h1), nh2=Number(h2);
@@ -516,6 +596,7 @@ function buildPacket(){
     return Number(w1)-Number(w2);
   });
 
+  // ITEM = H,WW,ID1,ID2...
   const items = keys.map(k=>{
     const [h,ww] = k.split("|");
     const idsSorted = [...map.get(k)].sort();
@@ -606,14 +687,18 @@ document.getElementById("btnUndoID").addEventListener("click", undoLastId);
 document.getElementById("btnClearIDs").addEventListener("click", clearIds);
 
 document.getElementById("btnAddRow").addEventListener("click", addToTemp);
+
 document.getElementById("btnClearInput").addEventListener("click", ()=>{
   elHours.value = "";
+  hoursTouched = false;
   applyDefaultHours();
   clearIds();
   setBadge(elBadgeInput, "狀態：已清除本次輸入", "warn");
 });
 
 document.getElementById("btnClearAllTmp").addEventListener("click", ()=>{
+  if(tmpRows.length===0) return;
+  if(!confirm("確認清空暫存列表？")) return;
   tmpRows = [];
   renderTmpTable();
   updateStatusForPacket("");
