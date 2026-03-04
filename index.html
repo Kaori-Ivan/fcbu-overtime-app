@@ -266,12 +266,20 @@ td.actions{white-space:nowrap;}
 
   <!-- 暫存清單 -->
   <div class="card">
+    <div class="label">暫存列表（輸出前可刪除）</div>
     <div class="muted" style="margin-bottom:10px;">
+      顯示完整格式：申請日期 / 工號 / 加班時數 / 站別(01–12)。輸出 QR 時才會打包成 D|ITEM… 格式。
+    </div>
 
     <table>
       <thead>
         <tr>
-          <th>序</th><th>申請日期</th><th>工號</th><th>加班時數</th><th>站別</th><th>刪除</th>
+          <th>序</th>
+          <th>申請日期</th>
+          <th>工號</th>
+          <th>加班時數</th>
+          <th>站別</th>
+          <th>刪除</th>
         </tr>
       </thead>
       <tbody id="tmpTbody">
