@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FCBU 加班申報 Ver1.0</title>
+<title>FCBU 加班申報｜OT QR v2 clean（Batch Pack｜Group View）</title>
 
 <!-- QRCode.js -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -50,7 +50,7 @@ body{
   padding:18px;
   margin-bottom:16px;
   box-shadow:0 8px 20px rgba(0,0,0,.06);
-  overflow:hidden; /* ✅ 防止 iOS input 撐出 */
+  overflow:hidden;
 }
 .label{font-size:14px;color:#234;margin-bottom:6px;}
 .muted{color:var(--muted);font-size:13px;line-height:1.45;}
@@ -64,8 +64,6 @@ body{
   background:#f2f8ff;
   display:block;
 }
-
-/* ✅ iOS Safari date input 防溢出 */
 input[type="date"].input{
   -webkit-appearance:none;
   appearance:none;
@@ -88,7 +86,7 @@ input[type="date"].input{
   display:flex;align-items:center;gap:12px;
   border:2px solid transparent;
   cursor:pointer;user-select:none;
-  min-height:74px; /* ✅ 讓每格高度一致 */
+  min-height:74px;
 }
 .work-btn.active{border-color:#6aa8ee;background:#eef6ff;}
 .work-num{
@@ -121,8 +119,9 @@ button{
 /* Table */
 table{width:100%;border-collapse:collapse;font-size:14px;}
 th{background:#eaf3ff;padding:12px;text-align:left;white-space:nowrap;}
-td{padding:12px;border-bottom:1px solid #e5edf7;vertical-align:middle;}
+td{padding:12px;border-bottom:1px solid #e5edf7;vertical-align:top;}
 td.actions{white-space:nowrap;}
+.ids-cell{word-break:break-word;line-height:1.35}
 
 /* QR */
 .qr-box{
@@ -135,7 +134,7 @@ td.actions{white-space:nowrap;}
   overflow:hidden;
 }
 
-/* ===== Mobile ===== */
+/* Mobile */
 @media (max-width:900px){
   .row{flex-direction:column;align-items:stretch;}
   .flex1{min-width:0;width:100%;}
@@ -144,12 +143,11 @@ td.actions{white-space:nowrap;}
   .card{padding:14px;}
   .qr-box{min-height:240px;}
 
-  /* ✅ 工作內容：手機 2 欄平鋪（整齊） */
   .work-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
   .work-btn{min-height:72px;padding:14px;}
   .work-num{width:36px;height:36px;border-radius:14px;}
 
-  /* ✅ 暫存列表：手機卡片式 */
+  /* Temp list → card view */
   table{border-collapse:separate;border-spacing:0 10px;}
   thead{display:none;}
   tbody tr{
@@ -163,7 +161,7 @@ td.actions{white-space:nowrap;}
   tbody td{
     display:flex;
     justify-content:space-between;
-    align-items:center;
+    align-items:flex-start;
     gap:12px;
     border-bottom:1px solid #eef3ff;
     padding:12px 14px;
@@ -173,7 +171,7 @@ td.actions{white-space:nowrap;}
     content:attr(data-label);
     color:#3b5776;
     font-weight:800;
-    min-width:78px;
+    min-width:86px;
     flex:0 0 auto;
   }
   td.actions{justify-content:flex-end;}
@@ -186,7 +184,7 @@ td.actions{white-space:nowrap;}
 <body>
 <div class="header">
   <div class="logo">K</div>
-  <h2>FCBU 加班申報 Ver1.0</h2>
+  <h2>FCBU 加班申報｜OT QR v2 clean（Batch Pack｜Group View）</h2>
 </div>
 
 <div class="container">
@@ -197,38 +195,43 @@ td.actions{white-space:nowrap;}
     <div class="row">
       <div class="flex1">
         <input id="inDateUI" class="input" type="date">
+        <div class="muted">封包 D 會自動轉成 YYMMDD</div>
       </div>
-      <span class="badge" id="badgeRows">暫存筆數：0</span>
+      <span class="badge" id="badgeGroups">分組：0</span>
+      <span class="badge" id="badgePeople">總人數：0</span>
     </div>
   </div>
 
   <!-- 單筆輸入 -->
   <div class="card">
+    <div class="label">單筆輸入（加入暫存）</div>
 
     <div class="row" style="margin-bottom:12px;">
       <div class="flex1">
-        <div class="label">加班時數</div>
+        <div class="label">預報時數（正整數 H）</div>
         <input id="inHours" class="input" inputmode="numeric" placeholder="例如 4（只接受正整數）">
-        <div class="muted">平日預設 4；週六預設 8</div>
+        <div class="muted">平日預設 4；週六/週日預設 8（若你手動改過，系統不會覆蓋）</div>
       </div>
 
       <div class="flex1">
-        <div class="label">站別/工作代碼（WW：01–12）</div>
+        <div class="label">工作站/代碼（WW：01–12）</div>
         <div class="input" style="display:flex;align-items:center;justify-content:space-between;">
           <span id="selWorkText" style="font-weight:900;">01</span>
-          <span class="muted">點下方工作內容切換</span>
+          <span class="muted">點下方工作內容切換（會自動捲到工號輸入）</span>
         </div>
       </div>
     </div>
 
     <div class="work-wrap">
+      <div class="label">工作內容（封包只放 01–12）</div>
       <div class="work-grid" id="workGrid"></div>
+      <div class="muted" style="margin-top:10px;">暫存表顯示中文；QR 只放代碼。</div>
     </div>
   </div>
 
   <!-- 人員工號 -->
-  <div class="card">
-    <div class="label">人員工號（連續加入，用逗號區分）</div>
+  <div class="card" id="cardIDs">
+    <div class="label">加班人員（連續加入，用逗號區分）</div>
 
     <div class="row">
       <input id="inID" class="input flex1" placeholder="掃描/輸入工號後按 Enter（例如 C1900）">
@@ -236,12 +239,12 @@ td.actions{white-space:nowrap;}
       <button id="btnCam" class="btn-primary">相機掃描加入</button>
       <button id="btnUndoID">刪除最後一位</button>
       <button id="btnClearIDs" class="btn-danger">清空工號</button>
-      <span class="badge" id="badgeCount">人數：0</span>
+      <span class="badge" id="badgeCount">本次人數：0</span>
     </div>
 
     <div id="camPanel" class="cam-panel" style="display:none;">
       <div class="muted">
-        ⚠ 相機功能通常需要 <b>https</b> 或 <b>localhost</b>（GitHub Pages/內網 https OK），純 file:/// 可能無法啟動。
+        ⚠ 相機功能通常需要 <b>https</b> 或 <b>localhost</b>，純 file:/// 可能無法啟動。
       </div>
       <div style="margin-top:10px;">
         <div id="qrReader"></div>
@@ -253,32 +256,33 @@ td.actions{white-space:nowrap;}
     </div>
 
     <div style="margin-top:10px;">
-      <div class="label">人員清單</div>
+      <div class="label">本次 IDS（逗號清單）</div>
       <div id="idsText" class="input" style="background:#f6f9ff;">（尚無人員）</div>
     </div>
 
     <div class="btn-row" style="margin-top:12px;">
-      <button id="btnAddRow" class="btn-primary">加班清單列表</button>
+      <button id="btnAddGroup" class="btn-primary">加入暫存（以 H+WW 分組合併）</button>
       <button id="btnClearInput">清除本次輸入</button>
       <span class="badge" id="badgeInput">狀態：待加入</span>
     </div>
   </div>
 
-  <!-- 暫存清單 -->
+  <!-- 暫存清單（分組顯示） -->
   <div class="card">
-    <div class="label">暫存列表（輸出前可刪除）</div>
+    <div class="label">暫存列表（分組顯示｜輸出前可刪除）</div>
     <div class="muted" style="margin-bottom:10px;">
-      顯示完整格式：申請日期 / 工號 / 加班時數 / 站別(01–12)。輸出 QR 時才會打包成 D|ITEM… 格式。
+      依封包格式顯示：<b>D | H,WW,ID1,ID2… ; H,WW,ID…</b><br>
+      列表欄位：<b>加班日期 / 預報時數 / 工作站 / 加班人員</b>
     </div>
 
     <table>
       <thead>
         <tr>
           <th>序</th>
-          <th>申請日期</th>
-          <th>工號</th>
-          <th>加班時數</th>
-          <th>站別</th>
+          <th>加班日期</th>
+          <th>預報時數</th>
+          <th>工作站</th>
+          <th>加班人員</th>
           <th>刪除</th>
         </tr>
       </thead>
@@ -295,8 +299,8 @@ td.actions{white-space:nowrap;}
   <!-- 打包與輸出 -->
   <div class="card">
     <div class="btn-row">
-      <button id="btnPackQR" class="btn-primary">生成 QR CODE</button>
-      <button id="btnClearQR">清除</button>
+      <button id="btnPackQR" class="btn-primary">生成 QR（一次打包全部暫存）</button>
+      <button id="btnClearQR">清除 QR</button>
 
       <label class="badge" style="display:flex;gap:8px;align-items:center;">
         <input id="chkClearAfterPack" type="checkbox" style="width:18px;height:18px;">
@@ -331,17 +335,11 @@ const WORK_NAMES = [
 function pad2(n){ return String(n).padStart(2,"0"); }
 function todayISO(){
   const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = pad2(d.getMonth()+1);
-  const dd = pad2(d.getDate());
-  return `${yyyy}-${mm}-${dd}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
 }
 function isoToYYMMDD(iso){
   if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
-  const yy = iso.slice(2,4);
-  const mm = iso.slice(5,7);
-  const dd = iso.slice(8,10);
-  return `${yy}${mm}${dd}`;
+  return iso.slice(2,4) + iso.slice(5,7) + iso.slice(8,10);
 }
 function setBadge(el, text, kind){
   el.textContent = text;
@@ -360,8 +358,6 @@ function workName(ww){
   if(!n || n<1 || n>12) return ww;
   return WORK_NAMES[n-1] || ww;
 }
-
-/** 平日/週末預設時數（跟日期走） */
 function defaultHoursByDateISO(iso){
   if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "4";
   const d = new Date(iso + "T00:00:00");
@@ -369,9 +365,36 @@ function defaultHoursByDateISO(iso){
   return (day === 0 || day === 6) ? "8" : "4";
 }
 
-/**
- * 規則：只要使用者沒手動改過、或目前值等於上一次自動值，就允許跟著日期更新
- */
+/** ===== Elements ===== */
+const elDateUI = document.getElementById("inDateUI");
+const elHours  = document.getElementById("inHours");
+const elWorkGrid = document.getElementById("workGrid");
+const elSelWorkText = document.getElementById("selWorkText");
+const elCardIDs = document.getElementById("cardIDs");
+
+const elInID = document.getElementById("inID");
+const elIdsText = document.getElementById("idsText");
+const elBadgeCount = document.getElementById("badgeCount");
+const elBadgeInput = document.getElementById("badgeInput");
+
+const elTmpTbody = document.getElementById("tmpTbody");
+const elBadgeGroups = document.getElementById("badgeGroups");
+const elBadgePeople = document.getElementById("badgePeople");
+
+const elBadgeLen = document.getElementById("badgeLen");
+const elBadgeLimit = document.getElementById("badgeLimit");
+const elBadgeStatus = document.getElementById("badgeStatus");
+const elQrBox = document.getElementById("qrBox");
+
+/** ===== State ===== */
+let selectedWork = "01"; // WW
+let ids = [];            // current input ids
+let groupMap = new Map(); // key "H|WW" -> { h, ww, ids:Set, gid:number }
+let gidSeed = 0;
+
+let qrScanner = null;
+
+/** hours auto logic */
 let hoursTouched = false;
 let lastAutoHours = "";
 function applyDefaultHours(){
@@ -385,42 +408,16 @@ function applyDefaultHours(){
   }
 }
 
-/** ===== Elements ===== */
-const elDateUI = document.getElementById("inDateUI");
-const elHours  = document.getElementById("inHours");
-const elWorkGrid = document.getElementById("workGrid");
-const elSelWorkText = document.getElementById("selWorkText");
-
-const elInID = document.getElementById("inID");
-const elIdsText = document.getElementById("idsText");
-const elBadgeCount = document.getElementById("badgeCount");
-const elBadgeInput = document.getElementById("badgeInput");
-
-const elTmpTbody = document.getElementById("tmpTbody");
-const elBadgeRows = document.getElementById("badgeRows");
-
-const elBadgeLen = document.getElementById("badgeLen");
-const elBadgeLimit = document.getElementById("badgeLimit");
-const elBadgeStatus = document.getElementById("badgeStatus");
-const elQrBox = document.getElementById("qrBox");
-
-/** ===== State ===== */
-let selectedWork = "01";     // WW
-let ids = [];                // current input IDs (unique)
-let tmpRows = [];            // expanded rows: {rid, d, id, h, ww}
-let ridSeed = 0;
-let qrScanner = null;
-
 /** ===== Init ===== */
 elDateUI.value = todayISO();
 elBadgeLimit.textContent = `上限：${MAX_QR_LEN}（建議）`;
-renderWorkButtons();     // ✅ 改成扁平 12 格
+renderWorkButtons();
 updateIdsUI();
-renderTmpTable();
+renderGroupTable();
 updateStatusForPacket("");
 applyDefaultHours();
 
-/** events */
+/** ===== Events: date/hours ===== */
 elDateUI.addEventListener("change", ()=> applyDefaultHours());
 elHours.addEventListener("input", ()=>{
   const v = (elHours.value || "").trim();
@@ -428,7 +425,13 @@ elHours.addEventListener("input", ()=>{
   hoursTouched = true;
 });
 
-/** ===== Work buttons (flat 12 buttons) ===== */
+/** ===== Work buttons: flat 12 + auto scroll to IDs ===== */
+function scrollToIDs(){
+  // 先捲卡片，再 focus 讓現場直接掃
+  elCardIDs.scrollIntoView({ behavior:"smooth", block:"start" });
+  setTimeout(()=>{ try{ elInID.focus(); }catch(_){} }, 250);
+}
+
 function renderWorkButtons(){
   elWorkGrid.innerHTML = "";
   for(let i=1;i<=12;i++){
@@ -445,6 +448,7 @@ function renderWorkButtons(){
         x.classList.toggle("active", x.dataset.work === selectedWork);
       });
       setBadge(elBadgeInput, `狀態：已選站別 ${selectedWork}`);
+      scrollToIDs(); // ✅ 點一下就自動捲到工號輸入
     });
     elWorkGrid.appendChild(btn);
   }
@@ -474,69 +478,99 @@ function clearIds(){
 }
 function updateIdsUI(){
   elIdsText.textContent = ids.length ? ids.join(",") : "（尚無人員）";
-  elBadgeCount.textContent = `人數：${ids.length}`;
+  elBadgeCount.textContent = `本次人數：${ids.length}`;
 }
 
-/** ===== Add to temp ===== */
-function addToTemp(){
+/** ===== Add to groupMap (merge by H+WW) ===== */
+function addToGroup(){
   const d = isoToYYMMDD(elDateUI.value);
   const h = (elHours.value||"").trim();
   const ww = selectedWork;
 
   if(!/^\d{6}$/.test(d)) { alert("日期不正確，請用日曆選擇"); return; }
-  if(!isPositiveInt(h)) { alert("加班時數只接受正整數（例如 4）"); return; }
+  if(!isPositiveInt(h)) { alert("預報時數只接受正整數（例如 4）"); return; }
   if(!ww) { alert("站別(01-12) 未選擇"); return; }
   if(ids.length===0) { alert("請至少加入 1 位工號"); return; }
 
-  ids.forEach(emp=>{
-    tmpRows.push({ rid: ++ridSeed, d, id: emp, h, ww });
-  });
+  const key = `${h}|${ww}`;
+  if(!groupMap.has(key)){
+    groupMap.set(key, { gid: ++gidSeed, h, ww, ids: new Set() });
+  }
+  const g = groupMap.get(key);
+  ids.forEach(emp => g.ids.add(emp));
 
-  // 清除本次輸入（保留日期、保留站別）
+  // reset this input
+  ids = [];
+  updateIdsUI();
+
   elHours.value = "";
   hoursTouched = false;
   applyDefaultHours();
 
-  ids = [];
-  updateIdsUI();
-  renderTmpTable();
-  setBadge(elBadgeInput, `狀態：已加入暫存（站別 ${ww} 可繼續）`);
+  renderGroupTable();
+  setBadge(elBadgeInput, `狀態：已加入暫存（分組 ${h},${ww} 已合併）`);
 }
 
-function removeTempRowWithConfirm(rid){
-  const row = tmpRows.find(r=>r.rid===rid);
-  const msg = row
-    ? `確認刪除？\n工號：${row.id}\n時數：${row.h}\n站別：${row.ww} - ${workName(row.ww)}`
-    : "確認刪除這筆資料？";
+/** ===== Remove group with confirm ===== */
+function removeGroupWithConfirm(key){
+  const g = groupMap.get(key);
+  if(!g) return;
+  const idsArr = [...g.ids].sort();
+  const msg =
+`確認刪除此分組？
+預報時數：${g.h}
+工作站：${g.ww} - ${workName(g.ww)}
+人數：${idsArr.length}
+工號：${idsArr.join(", ")}`;
   if(!confirm(msg)) return;
-  tmpRows = tmpRows.filter(r=>r.rid !== rid);
-  renderTmpTable();
+
+  groupMap.delete(key);
+  renderGroupTable();
 }
 
-/** ===== Temp table render ===== */
-function renderTmpTable(){
-  elBadgeRows.textContent = `暫存筆數：${tmpRows.length}`;
+/** ===== Render group table (sorted by WW then H) ===== */
+function renderGroupTable(){
+  const iso = elDateUI.value || "";
+  const ymd = isoToYYMMDD(iso) || "";
+  const dateShow = (iso && ymd) ? `${iso}（${ymd}）` : ymd;
 
-  if(tmpRows.length===0){
+  const groups = [...groupMap.entries()].map(([key, g])=>{
+    const idsArr = [...g.ids].sort();
+    return { key, ...g, idsArr };
+  });
+
+  // ✅ 你想要「站不同就下一行」=> 我用 WW 為主排序，再用 H
+  groups.sort((a,b)=>{
+    const wa = Number(a.ww), wb = Number(b.ww);
+    if(wa !== wb) return wa - wb;
+    return Number(a.h) - Number(b.h);
+  });
+
+  // 總人數（唯一工號）
+  const allPeople = new Set();
+  groups.forEach(g => g.idsArr.forEach(id => allPeople.add(id)));
+  elBadgeGroups.textContent = `分組：${groups.length}`;
+  elBadgePeople.textContent = `總人數：${allPeople.size}`;
+
+  if(groups.length===0){
     elTmpTbody.innerHTML = `<tr><td colspan="6" class="muted">（尚無暫存資料）</td></tr>`;
     return;
   }
 
-  const iso = elDateUI.value || "";
-  const ymd = isoToYYMMDD(iso) || "";
+  elTmpTbody.innerHTML = groups.map((g, idx)=>{
+    const stationShow = `${g.ww} - ${workName(g.ww)}`;
+    const idsShow = g.idsArr.join(", ");
+    const peopleCount = g.idsArr.length;
 
-  elTmpTbody.innerHTML = tmpRows.map((r, i)=>{
-    const dateShow = (iso && ymd) ? `${iso}（${ymd}）` : r.d;
-    const stationShow = `${r.ww} - ${workName(r.ww)}`;
     return `
       <tr>
-        <td data-label="序">${i+1}</td>
-        <td data-label="申請日期">${dateShow}</td>
-        <td data-label="工號">${r.id}</td>
-        <td data-label="加班時數">${r.h}</td>
-        <td data-label="站別">${stationShow}</td>
+        <td data-label="序">${idx+1}</td>
+        <td data-label="加班日期">${dateShow}</td>
+        <td data-label="預報時數">${g.h}</td>
+        <td data-label="工作站">${stationShow}</td>
+        <td data-label="加班人員" class="ids-cell">${idsShow} <span class="muted">（${peopleCount}人）</span></td>
         <td class="actions" data-label="">
-          <button class="btn-danger" data-rid="${r.rid}" style="padding:10px 12px;border-radius:12px;">
+          <button class="btn-danger" data-key="${g.key}" style="padding:10px 12px;border-radius:12px;">
             刪除
           </button>
         </td>
@@ -544,43 +578,38 @@ function renderTmpTable(){
     `;
   }).join("");
 
-  elTmpTbody.querySelectorAll("button[data-rid]").forEach(btn=>{
+  elTmpTbody.querySelectorAll("button[data-key]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
-      const rid = Number(btn.dataset.rid);
-      removeTempRowWithConfirm(rid);
+      const key = btn.dataset.key;
+      removeGroupWithConfirm(key);
     });
   });
 }
 
-/** ===== Pack QR ===== */
+/** ===== Build packet from groups =====
+ *  D|H,WW,ID1,ID2;H,WW,ID...
+ */
 function buildPacket(){
   const d = isoToYYMMDD(elDateUI.value);
   if(!/^\d{6}$/.test(d)) throw new Error("日期不正確，請用日曆選擇");
-  if(tmpRows.length===0) throw new Error("暫存列表目前沒有資料");
+  if(groupMap.size===0) throw new Error("暫存列表目前沒有資料");
 
-  const map = new Map(); // key -> Set(ids)
-  tmpRows.forEach(r=>{
-    const key = `${r.h}|${r.ww}`;
-    if(!map.has(key)) map.set(key, new Set());
-    map.get(key).add(r.id);
+  const groups = [...groupMap.values()].map(g=>{
+    const idsArr = [...g.ids].sort();
+    return { h: g.h, ww: g.ww, idsArr };
   });
 
-  const keys = [...map.keys()].sort((a,b)=>{
-    const [h1,w1]=a.split("|"); const [h2,w2]=b.split("|");
-    const nh1=Number(h1), nh2=Number(h2);
-    if(nh1!==nh2) return nh1-nh2;
-    return Number(w1)-Number(w2);
+  groups.sort((a,b)=>{
+    const wa = Number(a.ww), wb = Number(b.ww);
+    if(wa !== wb) return wa - wb;
+    return Number(a.h) - Number(b.h);
   });
 
-  const items = keys.map(k=>{
-    const [h,ww] = k.split("|");
-    const idsSorted = [...map.get(k)].sort();
-    return [h, ww, ...idsSorted].join(",");
-  });
-
+  const items = groups.map(g => [g.h, g.ww, ...g.idsArr].join(","));
   return `${d}|${items.join(";")}`;
 }
 
+/** ===== QR ===== */
 function renderQR(text){
   elQrBox.innerHTML = "";
   new QRCode(elQrBox, { text, width:220, height:220, correctLevel:QRCode.CorrectLevel.M });
@@ -612,8 +641,8 @@ function packAndMakeQR(){
 
     const clearAfter = document.getElementById("chkClearAfterPack")?.checked;
     if(clearAfter){
-      tmpRows = [];
-      renderTmpTable();
+      groupMap.clear();
+      renderGroupTable();
       setBadge(elBadgeStatus, "狀態：已生成並清空暫存", "warn");
     }
   }catch(e){
@@ -649,7 +678,7 @@ async function stopCameraScan(){
   setBadge(document.getElementById("badgeCam"), "相機：未啟動");
 }
 
-/** ===== Events ===== */
+/** ===== UI Events ===== */
 document.getElementById("btnAddID").addEventListener("click", ()=> addId(elInID.value));
 elInID.addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){ e.preventDefault(); addId(elInID.value); }
@@ -657,7 +686,8 @@ elInID.addEventListener("keydown", (e)=>{
 document.getElementById("btnUndoID").addEventListener("click", undoLastId);
 document.getElementById("btnClearIDs").addEventListener("click", clearIds);
 
-document.getElementById("btnAddRow").addEventListener("click", addToTemp);
+document.getElementById("btnAddGroup").addEventListener("click", addToGroup);
+
 document.getElementById("btnClearInput").addEventListener("click", ()=>{
   elHours.value = "";
   hoursTouched = false;
@@ -667,10 +697,10 @@ document.getElementById("btnClearInput").addEventListener("click", ()=>{
 });
 
 document.getElementById("btnClearAllTmp").addEventListener("click", ()=>{
-  if(tmpRows.length===0) return;
+  if(groupMap.size===0) return;
   if(!confirm("確認清空暫存列表？")) return;
-  tmpRows = [];
-  renderTmpTable();
+  groupMap.clear();
+  renderGroupTable();
   updateStatusForPacket("");
   elQrBox.innerHTML = "";
   setBadge(elBadgeStatus, "狀態：已清空暫存", "warn");
